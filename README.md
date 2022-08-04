@@ -4,6 +4,8 @@ iPhoneでアプリインストール不要でカメラを全画面表示させ�
 Zoom の画面共有で iPhone/iPad に接続できるようになりましたが、
 その際にカメラ映像をなるべく全画面で表示したいという目的で用意しました。
 
+カメラの映像が表示されるだけであり、これ自体に撮影機能は一切ありません。
+
 
 # 準備
 1. https://kirurobo.github.io/HtmlFullscreenCamera/ にSafariでアクセス
