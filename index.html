@@ -67,6 +67,12 @@ body {
     var currentStream = null;
     var currentFacing = true;
 
+    function keepCapture() {
+        if (currentStream) {
+            alert(currentStream);
+        }
+    }
+
     // カメラに接続
     function startCapture(useRearCamera = false) {
         const video = document.getElementById('video');
@@ -80,6 +86,7 @@ body {
             audio: false,
         }).then(stream => {
             currentStream = stream;
+            currentStream.addEventListener('inactive', keepCapture)
 
             video.srcObject = stream;
             video.play();
