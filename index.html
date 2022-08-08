@@ -11,7 +11,7 @@
     <!-- via https://icooon-mono.com/11197-%e3%82%ab%e3%83%a1%e3%83%a9%e3%81%ae%e3%82%a2%e3%82%a4%e3%82%b3%e3%83%b3%e7%b4%a0%e6%9d%90-7/ -->
     <style>
 body {
-    font-family: "Meiryo", "Hiragino Sans", "Osaka", sans-serif;
+    /* font-family: "Meiryo", "Hiragino Sans", "Osaka", sans-serif; */
     text-align: center;
     background-color: black;
     margin: 0;
@@ -33,19 +33,13 @@ body {
     width: 100%;
     height: 100%;
 }
-.overlay {
+.overlay button {
     display: block;
     position: absolute;
-    margin: 0;
+    margin: 1vmin;
     padding: 0;
-    top: 2vmin;
-    left: 2vmin;
-}
-#btn-facing {
     width: 8vmin;
     height: 8vmin;
-    padding: 0;
-    margin: 1vmin;
     background-color: #666;
     border-color: #666;
     border-radius: 16%;
@@ -54,21 +48,32 @@ body {
     font-size: 6vmin;
     text-align: center;
 }
+#btn-facing {
+    top: 2vmin;
+    left: 2vmin;
+}
+#btn-fullscreen {
+    bottom: 2vmin;
+    right: 2vmin;
+}
     </style>
 </head>
 
 <body>
   <div class="main" id="main">
     <video id="video" autoplay playsinline></video>
-  </div>
-  <div class="overlay">
-    <button id="btn-facing">&rlarr;</button>
+    <div class="overlay">
+        <button id="btn-facing">&rlarr;</button>
+        <button id="btn-fullscreen">&#x2921;</button>
+    </div>
   </div>
   <script>
     var currentStream = null;
     var currentFacing = true;
+    var isFullscreen = false;
     const restartInterval = 2000;   // 2秒ごとに監視して接続できていなければ再接続
 
+    // カメラの状態をみて、接続が失われていたら再接続
     function keepCapture() {
         if (!currentStream || !currentStream.active) {
             stopCapture();
@@ -78,7 +83,7 @@ body {
 
     // カメラに接続
     function startCapture(useRearCamera = false) {
-        const video = document.getElementById('video');
+        const video = document.querySelector('#video');
         let facingMode = useRearCamera ? 'environment' : 'user';
         //var aspectRatio = window.screen.width / window.screen.height;
         var aspectRatio = window.screen.availWidth / window.screen.availHeight;
@@ -111,11 +116,74 @@ body {
         }
     }
 
-    document.querySelector("#btn-facing").addEventListener("click", function() {
+    // 前面／背面カメラを切替
+    function toggleFacing() {
         currentFacing = !currentFacing;
         stopCapture();
         startCapture(currentFacing);
-    });
+    }
+
+    // videoのフルスクリーンを切替
+    function toggleFullscreen() {
+        const target = document.querySelector('#main');
+        const video = document.querySelector('#video');
+
+        isFullscreen = !isFullscreen;
+        
+        if (isFullscreen) {
+            if (target.requestFullScreen) {
+                target.requestFullScreen();
+            } else if (target.webkitRequestFullscreen) {
+                target.webkitRequestFullscreen();
+            } else if (target.webkitEnterFullscreen) {
+                target.webkitEnterFullscreen();
+            } else if (target.mozRequestFullScreen) {
+                target.mozRequestFullScreen();
+            } else if (target.msRequestFullscreen) {
+                target.msRequestFullscreen();
+            } else if (video.webkitEnterFullscreen) {
+                // iOSでは任意のdivでは不可
+                video.webkitEnterFullScreen();
+            } else if (video.requestFullScreen) {
+                // iOSでは任意のdivでは不可
+                video.requestFullScreen();
+            } else {
+                //alert("全画面にできません");
+            }
+        } else {
+            if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.cancelFullScreen) {
+                document.cancelFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            } else {
+                //alert("全画面を終了できません");
+            }
+        }
+    }
+
+    function onVideoFullscreenchange(e) {
+        //const video = document.querySelector('#video');
+        const video = e.srcElement || e.target;
+        if (isFullscreen && !video.webkitDisplayingFullscreen) {
+            isFullscreen = false;
+        }
+    }
+
+    function onVideoClick(e) {
+        const video = e.srcElement || e.target;
+        video.play();
+    }
+
+    document.querySelector("#btn-facing").addEventListener("click", toggleFacing);
+    document.querySelector("#btn-fullscreen").addEventListener("click", toggleFullscreen);
+    document.querySelector("#video").addEventListener("webkitendfullscreen", onVideoFullscreenchange);
+    document.querySelector("#video").addEventListener("click", onVideoClick);
 
     startCapture(currentFacing);
     setInterval(keepCapture, restartInterval);      // 自動再接続開始
