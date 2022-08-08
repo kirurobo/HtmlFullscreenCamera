@@ -98,7 +98,7 @@ body {
         }).then(stream => {
             currentStream = stream;
             //currentStream.addEventListener('inactive', keepCapture)
-
+            
             video.srcObject = stream;
             video.play();
         }).catch(err => {
@@ -123,12 +123,25 @@ body {
         startCapture(currentFacing);
     }
 
+    // フルスクリーンかどうかを判別
+    // via https://blog.tsukumijima.net/article/javascript-fullscreen-decision/
+    function checkFullscreen() {
+        return (
+            (document.fullscreenElement !== undefined && document.fullscreenElement !== null) ||
+            (document.mozFullScreenElement !== undefined && document.mozFullScreenElement !== null) ||
+            (document.webkitFullscreenElement !== undefined && document.webkitFullscreenElement !== null) ||
+            (document.webkitCurrentFullScreenElement !== undefined && document.webkitCurrentFullScreenElement !== null) ||
+            (document.msFullscreenElement !== undefined && document.msFullscreenElement !== null)
+            );
+    }
+
     // videoのフルスクリーンを切替
     function toggleFullscreen() {
         const target = document.querySelector('#main');
         const video = document.querySelector('#video');
 
-        isFullscreen = !isFullscreen;
+        // 全画面のオブジェクトが検出されたら、全画面解除とする
+        isFullscreen = !checkFullscreen();
         
         if (isFullscreen) {
             if (target.requestFullScreen) {
@@ -167,23 +180,24 @@ body {
         }
     }
 
+    // ボタン以外で全画面表示が終了していたら、フラグを戻す
     function onVideoFullscreenchange(e) {
         //const video = document.querySelector('#video');
         const video = e.srcElement || e.target;
-        if (isFullscreen && !video.webkitDisplayingFullscreen) {
+        if (isFullscreen && (!video.webkitDisplayingFullscreen || !document.fullscreenElement)) {
             isFullscreen = false;
         }
     }
 
-    function onVideoClick(e) {
+    // iOSで全画面時、閉じるボタンやポーズボタンでの停止を無効化する
+    function enforcePlay(e) {
         const video = e.srcElement || e.target;
         video.play();
     }
 
     document.querySelector("#btn-facing").addEventListener("click", toggleFacing);
     document.querySelector("#btn-fullscreen").addEventListener("click", toggleFullscreen);
-    document.querySelector("#video").addEventListener("webkitendfullscreen", onVideoFullscreenchange);
-    document.querySelector("#video").addEventListener("click", onVideoClick);
+    document.querySelector("#video").addEventListener("pause", enforcePlay);
 
     startCapture(currentFacing);
     setInterval(keepCapture, restartInterval);      // 自動再接続開始
